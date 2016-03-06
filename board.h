@@ -21,6 +21,7 @@ public:
     ~Board();
     Board *copy();
         
+    
     bool isDone();
     bool hasMoves(Side side);
     bool checkMove(Move *m, Side side);
