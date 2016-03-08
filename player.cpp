@@ -50,45 +50,41 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
      
      //do opponents move
      board->doMove(opponentsMove, opponentsSide);
-     std::cerr << "side = " << side << std::endl;
      
      if(board->isDone()){
-		 std::cerr <<"Done!" << std::endl;
 		 return NULL;
 	 }
 	 if (!(board->hasMoves(side))){
-		 std::cerr << "no moves" << std::endl;
 		 return NULL;
 	 }
 	 
-	 Move *best = new Move(-1, -1);
-	 std::cerr << "best = (" << best->getX() << ", " << best->getY() << ")" << std::endl;
-	 int scoreBest;
-	 for(int i = 0; i < 8; i ++){
-		 for(int j = 0; j < 8; j ++){
-			 std::cerr << "best = (" << best->getX() << ", " << best->getY() << ")" << std::endl;
-			 Move *move = new Move(i, j);
-			 std::cerr << "checking (" << i << ", " << j << ")" << std::endl;
-			 if(board->checkMove(move, side)){
-				 int score = this->heuristic(move);
-				 std::cerr << "score = " << score << std::endl;
-				 if(scoreBest < score){
-					 best = move;
-					 scoreBest = score;
-					 std::cerr << "best = (" << best->getX() << ", " << best->getY() << ")" << std::endl;
-				 }else {
-					 delete move;
+	 if(testingMinimax){
+		 return minimax();
+	 }else{
+	 
+		 Move *best = new Move(-1, -1);
+		 int scoreBest;
+		 for(int i = 0; i < 8; i ++){
+			 for(int j = 0; j < 8; j ++){
+				 Move *move = new Move(i, j);
+				 if(board->checkMove(move, side)){
+					 int score = this->heuristic(move);
+					 if(scoreBest < score){
+						 best = move;
+						 scoreBest = score;
+					 }else {
+						 delete move;
+					 }
 				 }
-			 }
-			 
+				 
+			}
+		 }
+		if(best->getX() == -1){
+			return NULL;
 		}
-	 }
-	 std::cerr << "best = (" << best->getX() << ", " << best->getY() << ")" << std::endl;
-	if(best->getX() == -1){
-		return NULL;
+		board->doMove(best, side);
+		return best;
 	}
-	board->doMove(best, side);
-	return best;
 }
 
 int Player::heuristic(Move *move){
@@ -101,13 +97,81 @@ int Player::heuristic(Move *move){
 	//find score
 	int score = board2->count(side) - board2->count(opponentsSide);
 	
-	//corners
-	if((x == 0 and (y == 0 or y == 7)) or (x == 7 and (y == 0 or y == 7))){
-		score *= 5;
-	} else if (x == 0 or x == 7 or y == 0 or y == 7){ //edges
-		score *= 2;
+	if(!testingMinimax){
+		//corners
+		if((x == 0 and (y == 0 or y == 7)) or (x == 7 and (y == 0 or y == 7))){
+			score += 10;
+		} else if (x == 0 or x == 7 or y == 0 or y == 7){ //edges
+			//spaces that lead to corners without corner taken 
+			if((((x == 0 and y == 1) or (x == 1 and y == 0) or (x == 1 and y == 1)) and !(board2->occupied(0, 0)))
+			or (((x == 0 and y == 6) or (x == 1 and y == 6) or (x == 1 and y == 7)) and !(board2->occupied(0, 7)))
+			or (((x == 6 and y == 0) or (x == 6 and y == 1) or (x == 7 and y == 1)) and !(board2->occupied(7, 0)))
+			or (((x == 6 and y == 6) or (x == 6 and y == 7) or (x == 7 and y == 6)) and !(board2->occupied(7, 7)))){
+				score -= 7;
+			} else{
+				score += 4;
+			}
+		}
 	}
 	
 	delete board2;
 	return score;
+}
+
+Move *Player::minimax(){
+	std::vector<Move *> moveList;
+	
+	
+	//find all possible moves
+	for(int i = 0; i < 8; i ++){
+		 for(int j = 0; j < 8; j ++){
+			 Move *move = new Move(i, j);
+			 if(board->checkMove(move, side)){
+				 moveList.push_back(move);
+			 }
+			 
+		}
+	 }
+	 
+	 std::vector<int> moveScore(0, moveList.size());
+	 
+	 //check lowest score for each possible move
+	 for(unsigned int k = 0; k < moveList.size(); k ++){
+		 Board *board2 = board->copy();
+		 board2->doMove(moveList[k], opponentsSide);
+		 
+		 //find your lowest score move
+		 Move *worst = new Move(-1, -1);
+		 int scoreWorst;
+		 for(int i = 0; i < 8; i ++){
+			 for(int j = 0; j < 8; j ++){
+				 Move *move = new Move(i, j);
+				 if(board2->checkMove(move, side)){
+					 int score = this->heuristic(move);
+					 if(scoreWorst > score){
+						 worst = move;
+						 scoreWorst = score;
+					 }else {
+						 delete move;
+					 }
+				 }
+				 
+			}
+		 }
+		 moveScore[k] = scoreWorst;
+		 delete board2;
+		 delete worst;
+		 
+	 }
+	 
+	 unsigned int indexWorst = 0;
+	 for(unsigned int i = 0; i < moveScore.size(); i ++){
+		 if(moveScore[indexWorst] < moveScore[i]){
+			 indexWorst = i;
+		 }
+		 
+	 }
+	 
+	 return moveList[indexWorst];
+	
 }
