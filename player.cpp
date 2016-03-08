@@ -30,6 +30,10 @@ Player::~Player() {
 	delete board;
 }
 
+void Player::setBoard(char boardData[64]){
+	board->setBoard(boardData);
+}
+
 /*
  * Compute the next move given the opponent's last move. Your AI is
  * expected to keep track of the board on its own. If this is the first move,
@@ -43,10 +47,6 @@ Player::~Player() {
  * return NULL.
  */
 Move *Player::doMove(Move *opponentsMove, int msLeft) {
-    /* 
-     * TODO: Implement how moves your AI should play here. You should first
-     * process the opponent's opponents move before calculating your own move
-     */ 
      
      //do opponents move
      board->doMove(opponentsMove, opponentsSide);
@@ -68,7 +68,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
 			 for(int j = 0; j < 8; j ++){
 				 Move *move = new Move(i, j);
 				 if(board->checkMove(move, side)){
-					 int score = this->heuristic(move);
+					 int score = this->heuristic(move, board->copy());
 					 if(scoreBest < score){
 						 best = move;
 						 scoreBest = score;
@@ -79,21 +79,22 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
 				 
 			}
 		 }
-		if(best->getX() == -1){
-			return NULL;
-		}
+		
 		board->doMove(best, side);
 		return best;
 	}
 }
 
-int Player::heuristic(Move *move){
-	//clone board
-	Board *board2 = board->copy();
+int Player::heuristic(Move *move, Board * board2){
 	int x = move->getX();
 	int y = move->getY();
 	//move
+	if(!testingMinimax){
 	board2->doMove(move, side);
+}
+	else{
+		board2->doMove(move, opponentsSide);
+	}
 	//find score
 	int score = board2->count(side) - board2->count(opponentsSide);
 	
@@ -114,7 +115,6 @@ int Player::heuristic(Move *move){
 		}
 	}
 	
-	delete board2;
 	return score;
 }
 
@@ -128,50 +128,46 @@ Move *Player::minimax(){
 			 Move *move = new Move(i, j);
 			 if(board->checkMove(move, side)){
 				 moveList.push_back(move);
+			 }else{
+				 delete move;
 			 }
-			 
 		}
 	 }
 	 
-	 std::vector<int> moveScore(0, moveList.size());
-	 
+	 int minMaxIndex = 0;
+	 int minMax = findMin(moveList[0], board->copy());
 	 //check lowest score for each possible move
-	 for(unsigned int k = 0; k < moveList.size(); k ++){
+	 
+	 for(unsigned int i = 1; i < moveList.size(); i ++){
 		 Board *board2 = board->copy();
-		 board2->doMove(moveList[k], opponentsSide);
-		 
-		 //find your lowest score move
-		 Move *worst = new Move(-1, -1);
-		 int scoreWorst;
-		 for(int i = 0; i < 8; i ++){
-			 for(int j = 0; j < 8; j ++){
-				 Move *move = new Move(i, j);
-				 if(board2->checkMove(move, side)){
-					 int score = this->heuristic(move);
-					 if(scoreWorst > score){
-						 worst = move;
-						 scoreWorst = score;
-					 }else {
-						 delete move;
-					 }
+		 int worst = findMin(moveList[i], board2);
+		 if(worst > minMax){
+			 minMaxIndex = i;
+		 }
+		
+	 }
+	 
+	 return moveList[minMaxIndex];
+	
+}
+
+int Player::findMin(Move * move, Board * board2){
+	board2->doMove(move, side);
+	
+	int scoreWorst = 100000;
+	for(int i = 0; i < 8; i ++){
+		 for(int j = 0; j < 8; j ++){
+			 Move *move1 = new Move(i, j);
+			 if(board2->checkMove(move1, opponentsSide)){
+				 int score = this->heuristic(move1, board2);
+				 if(scoreWorst > score){
+					 scoreWorst = score;
 				 }
-				 
-			}
-		 }
-		 moveScore[k] = scoreWorst;
-		 delete board2;
-		 delete worst;
-		 
-	 }
-	 
-	 unsigned int indexWorst = 0;
-	 for(unsigned int i = 0; i < moveScore.size(); i ++){
-		 if(moveScore[indexWorst] < moveScore[i]){
-			 indexWorst = i;
-		 }
-		 
-	 }
-	 
-	 return moveList[indexWorst];
+				 delete move1;
+			 }
+			 
+		}
+	}
+	return scoreWorst;
 	
 }
