@@ -51,6 +51,7 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
      //do opponents move
      board->doMove(opponentsMove, opponentsSide);
      
+     //check if you can move
      if(board->isDone()){
 		 return NULL;
 	 }
@@ -58,16 +59,18 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
 		 return NULL;
 	 }
 	 
+	 //when testing minimax
 	 if(testingMinimax){
 		 return minimax();
 	 }else{
-	 
-		 Move *best = new Move(-1, -1);
+	 //when running normal
+		 Move *best = new Move(-1, -1);//will stay (-1, -1) if no possible move
 		 int scoreBest;
 		 for(int i = 0; i < 8; i ++){
 			 for(int j = 0; j < 8; j ++){
 				 Move *move = new Move(i, j);
 				 if(board->checkMove(move, side)){
+					 //find possible move with the highest score
 					 int score = this->heuristic(move, board->copy());
 					 if(scoreBest < score){
 						 best = move;
@@ -90,8 +93,8 @@ int Player::heuristic(Move *move, Board * board2){
 	int y = move->getY();
 	//move
 	if(!testingMinimax){
-	board2->doMove(move, side);
-}
+		board2->doMove(move, side);
+	}
 	else{
 		board2->doMove(move, opponentsSide);
 	}
@@ -136,7 +139,7 @@ Move *Player::minimax(){
 	 
 	 int minMaxIndex = 0;
 	 int minMax = findMin(moveList[0], board->copy());
-	 //check lowest score for each possible move
+	 //check lowest score for each possible move and finds max min score
 	 
 	 for(unsigned int i = 1; i < moveList.size(); i ++){
 		 Board *board2 = board->copy();
@@ -154,7 +157,7 @@ Move *Player::minimax(){
 int Player::findMin(Move * move, Board * board2){
 	board2->doMove(move, side);
 	
-	int scoreWorst = 100000;
+	int scoreWorst = 100000;//make worst score very high so any possible score will be lower
 	for(int i = 0; i < 8; i ++){
 		 for(int j = 0; j < 8; j ++){
 			 Move *move1 = new Move(i, j);
@@ -168,6 +171,7 @@ int Player::findMin(Move * move, Board * board2){
 			 
 		}
 	}
+	//returns lowest possible score
 	return scoreWorst;
 	
 }
