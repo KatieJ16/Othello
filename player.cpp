@@ -1,4 +1,5 @@
 #include "player.h"
+#include <unistd.h>
 
 /*
  * Constructor for the player; initialize everything here. The side your AI is
@@ -49,7 +50,9 @@ void Player::setBoard(char boardData[64]){
 Move *Player::doMove(Move *opponentsMove, int msLeft) {
      
      //do opponents move
-     board->doMove(opponentsMove, opponentsSide);
+     if(opponentsMove != NULL){
+		board->doMove(opponentsMove, opponentsSide);
+	}
      
      //check if you can move
      if(board->isDone()){
@@ -62,7 +65,20 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
 	 //when testing minimax
 	 if(testingMinimax){
 		 return minimax();
-	 }else{
+	 }
+	 
+	 //If corner avaiable, take it
+	 Move * cornerMove = corner();
+	 if(cornerMove != NULL){
+		 board->doMove(cornerMove, side);
+		 return cornerMove;
+	 }
+	 
+	 	 
+	 Move *best = minimax();
+	 std::cerr << "Move = (" << best->getX() << ", " << best->getY() << ")" << std::endl;
+	 
+	 /***else{
 	 //when running normal
 		 Move *best = new Move(-1, -1);//will stay (-1, -1) if no possible move
 		 int scoreBest;
@@ -81,11 +97,14 @@ Move *Player::doMove(Move *opponentsMove, int msLeft) {
 				 }
 				 
 			}
-		 }
+		 }*/
 		
 		board->doMove(best, side);
+		sleep(2);
 		return best;
-	}
+		
+		
+	
 }
 
 int Player::heuristic(Move *move, Board * board2){
@@ -121,6 +140,34 @@ int Player::heuristic(Move *move, Board * board2){
 	return score;
 }
 
+Move *Player::corner(){
+	Move * move = new Move(0,0);
+	if(board->checkMove(move, side)){
+		return move;
+	}
+	delete move;
+	
+	move = new Move(7,0);
+	if(board->checkMove(move, side)){
+		return move;
+	}
+	delete move;
+	
+	move = new Move(0,7);
+	if(board->checkMove(move, side)){
+		return move;
+	}
+	delete move;
+	
+	move = new Move(7,7);
+	if(board->checkMove(move, side)){
+		return move;
+	}
+	delete move;
+	
+	return NULL;
+}
+
 Move *Player::minimax(){
 	std::vector<Move *> moveList;
 	
@@ -139,30 +186,65 @@ Move *Player::minimax(){
 	 
 	 int minMaxIndex = 0;
 	 int minMax = findMin(moveList[0], board->copy());
+	 std::cerr << " for Move = (" << moveList[0]->getX() << ", " << moveList[0]->getY() << ") min score = " << minMax << std::endl;
 	 //check lowest score for each possible move and finds max min score
 	 
 	 for(unsigned int i = 1; i < moveList.size(); i ++){
 		 Board *board2 = board->copy();
 		 int worst = findMin(moveList[i], board2);
-		 if(worst > minMax){
+		 if((worst > minMax) and (worst != 100000)){
 			 minMaxIndex = i;
+			 minMax = worst;
+			 std::cerr << "change Move to (" << moveList[i]->getX() << ", " << moveList[i]->getY() << ") minMax = " << minMax << std::endl;
+			 
 		 }
+		 std::cerr << " for Move = (" << moveList[i]->getX() << ", " << moveList[i]->getY() << ") min score = " << worst << std::endl;
 		
 	 }
+	
 	 
 	 return moveList[minMaxIndex];
 	
 }
 
-int Player::findMin(Move * move, Board * board2){
-	board2->doMove(move, side);
+/**int Player:: depthMin(int depth, Move * move, Board * board2){
+	for (int i = 0;  i < depth; i ++){
+		board2->doMove(move, thisSide);
+		
+		int scoreWorst = 100000;//make worst score very high so any possible score will be lower
+		for(int i = 0; i < 8; i ++){
+			 for(int j = 0; j < 8; j ++){
+				 Move *move1 = new Move(i, j);
+				 if(board2->checkMove(move1, otherSide)){
+					 int score = this->heuristic(move1, board2);
+					 //std::cerr << "Move = (" << move1->getX() << ", " << move1->getY() << ") score = " << score << std::endl;
+					 if(scoreWorst > score){
+						 scoreWorst = score;
+					 }
+					 delete move1;
+				 }
+				 
+			}
+		}
+	}
+}**/
+
+int Player::findMin(Move * move, Board * board2, Side thisSide){
+	Side otherSide;
+	if(thisSide == BLACK){
+		otherSide = WHITE;
+	} else{
+		otherSide = BLACK;
+	}
+	board2->doMove(move, thisSide);
 	
 	int scoreWorst = 100000;//make worst score very high so any possible score will be lower
 	for(int i = 0; i < 8; i ++){
 		 for(int j = 0; j < 8; j ++){
 			 Move *move1 = new Move(i, j);
-			 if(board2->checkMove(move1, opponentsSide)){
+			 if(board2->checkMove(move1, otherSide)){
 				 int score = this->heuristic(move1, board2);
+				 //std::cerr << "Move = (" << move1->getX() << ", " << move1->getY() << ") score = " << score << std::endl;
 				 if(scoreWorst > score){
 					 scoreWorst = score;
 				 }

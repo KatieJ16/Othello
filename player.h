@@ -16,6 +16,7 @@ public:
 	void setBoard(char boardData[64]);
     Move *doMove(Move *opponentsMove, int msLeft);
     int heuristic(Move *move, Board * board2);
+    Move *corner();
     Move *minimax();
     int findMin(Move * opponentsmove, Board * board2);
 
