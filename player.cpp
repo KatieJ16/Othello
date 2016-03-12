@@ -170,7 +170,7 @@ Move *Player::corner(){
 
 Move *Player::minimax(){
 	std::vector<Move *> moveList;
-	
+	int depth = board->numMovesLeft() / 2;
 	
 	//find all possible moves
 	for(int i = 0; i < 8; i ++){
@@ -184,14 +184,16 @@ Move *Player::minimax(){
 		}
 	 }
 	 
+	 //vector<vector<Move *> > depth = depthMin(3, board->copy(), side);
+	 //moveList = depth.back();
 	 int minMaxIndex = 0;
-	 int minMax = findMin(moveList[0], board->copy());
+	 int minMax = depthMin(depth, moveList[0], board->copy(), side);
 	 std::cerr << " for Move = (" << moveList[0]->getX() << ", " << moveList[0]->getY() << ") min score = " << minMax << std::endl;
 	 //check lowest score for each possible move and finds max min score
 	 
 	 for(unsigned int i = 1; i < moveList.size(); i ++){
 		 Board *board2 = board->copy();
-		 int worst = findMin(moveList[i], board2);
+		 int worst = depthMin(depth, moveList[i], board2, side);
 		 if((worst > minMax) and (worst != 100000)){
 			 minMaxIndex = i;
 			 minMax = worst;
@@ -207,27 +209,61 @@ Move *Player::minimax(){
 	
 }
 
-/**int Player:: depthMin(int depth, Move * move, Board * board2){
-	for (int i = 0;  i < depth; i ++){
-		board2->doMove(move, thisSide);
+int Player:: depthMin(int depthInt, Move *move, Board * board2, Side side1){
+	Side side2;
+	if(side1 == BLACK){
+		side2 = WHITE;
+	} else{
+		side2 = BLACK;
+	}
+	
+	std::vector<Move *> moveList;
+	std::vector<vector<Move *> > depth;
+	for (int i = 0;  i < depthInt; i ++){
+		moveList.clear();
+		board2->doMove(move, side1);
 		
 		int scoreWorst = 100000;//make worst score very high so any possible score will be lower
 		for(int i = 0; i < 8; i ++){
 			 for(int j = 0; j < 8; j ++){
 				 Move *move1 = new Move(i, j);
-				 if(board2->checkMove(move1, otherSide)){
-					 int score = this->heuristic(move1, board2);
-					 //std::cerr << "Move = (" << move1->getX() << ", " << move1->getY() << ") score = " << score << std::endl;
-					 if(scoreWorst > score){
-						 scoreWorst = score;
-					 }
-					 delete move1;
+				 if(board2->checkMove(move1, side2)){
+					 moveList.push_back(move1);
 				 }
 				 
 			}
 		}
+		
+		//flip sides
+		side1 = side2;
+		if(side2 == BLACK){
+			side2 = WHITE;
+		} else{
+			side2 = BLACK;
+		}
+		
+		depth.push_back(moveList);
 	}
-}**/
+	int minIndex = 0;
+	 int min = findMin(moveList[0], board2->copy(), side);
+	 //std::cerr << " for Move = (" << moveList[0]->getX() << ", " << moveList[0]->getY() << ") min score = " << min << std::endl;
+	 //check lowest score for each possible move and finds max min score
+	 
+	 for(unsigned int i = 1; i < moveList.size(); i ++){
+		 int worst = findMin(moveList[i], board2, side);
+		 if((worst < min) and (worst != 100000)){
+			 minIndex = i;
+			 min = worst;
+		//	 std::cerr << "change Move to (" << moveList[i]->getX() << ", " << moveList[i]->getY() << ") minMax = " << min << std::endl;
+			 
+		 }
+		 //std::cerr << " for Move = (" << moveList[i]->getX() << ", " << moveList[i]->getY() << ") min score = " << worst << std::endl;
+		
+	 }
+	 
+	 return min;
+	
+}
 
 int Player::findMin(Move * move, Board * board2, Side thisSide){
 	Side otherSide;

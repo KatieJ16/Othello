@@ -18,7 +18,8 @@ public:
     int heuristic(Move *move, Board * board2);
     Move *corner();
     Move *minimax();
-    int findMin(Move * opponentsmove, Board * board2);
+    int depthMin(int depth, Move *move, Board * board2, Side side1);
+    int findMin(Move * move, Board * board2, Side thisSide);
 
     // Flag to tell if the player is running within the test_minimax context
     bool testingMinimax;

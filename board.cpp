@@ -66,6 +66,21 @@ bool Board::hasMoves(Side side) {
     }
     return false;
 }
+//returns the total number of free spaces
+
+int Board::numMovesLeft(){
+	int movesLeft = 0;
+	for(int x = 0; x < 8; x ++){
+		for(int y = 0; y < 8; y ++){
+			Move * move = new Move(x, y);
+			if(checkMove(move, BLACK) or checkMove(move, WHITE)){
+				movesLeft ++;
+			}
+			delete move;
+		}
+	}
+	return movesLeft;
+}
 
 /*
  * Returns true if a move is legal for the given side; false otherwise.

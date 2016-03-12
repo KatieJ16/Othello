@@ -24,6 +24,7 @@ public:
     bool occupied(int x, int y);
     bool isDone();
     bool hasMoves(Side side);
+    int numMovesLeft();
     bool checkMove(Move *m, Side side);
     void doMove(Move *m, Side side);
     int count(Side side);
