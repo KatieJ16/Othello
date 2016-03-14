@@ -15,11 +15,13 @@ public:
     
 	void setBoard(char boardData[64]);
     Move *doMove(Move *opponentsMove, int msLeft);
+    Move *Simple();
+    bool leadToCorner(Move * move,  Board * board2);
     int heuristic(Move *move, Board * board2);
     Move *corner();
     Move *minimax();
     int depthMin(int depth, Move *move, Board * board2, Side side1);
-    int findMin(Move * move, Board * board2, Side thisSide);
+    int findMin(Move * move, Board * board2);
 
     // Flag to tell if the player is running within the test_minimax context
     bool testingMinimax;
