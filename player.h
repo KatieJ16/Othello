@@ -23,12 +23,7 @@ public:
     int heuristic(Move *move, Board * board2);
     int heuristic(Board * board2);
     Move *corner();
-    Move *minimax();
-    int depthMin(int depth, Move *move, Board * board2, Side side1);
-    //std::vector<Board *> allPossibleMoves(Board * b, Side s);
-    std::vector< std::vector<Move *> > allPossibleMoves(Board * b, Side s, std::vector<Move *> moveList);
-    int findMin(Board * board2, std::vector<Move *> moveList);
-
+    
     // Flag to tell if the player is running within the test_minimax context
     bool testingMinimax;
     Side side;
